@@ -1,0 +1,1 @@
+# ScaleDown_AzureSQL_With_LogicApps
