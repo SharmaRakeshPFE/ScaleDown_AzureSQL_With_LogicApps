@@ -1,0 +1,93 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Run_the_Environment_in_S5_during_Off_Hours_-_Delay": {
+                "inputs": {
+                    "interval": {
+                        "count": 8,
+                        "unit": "Hour"
+                    }
+                },
+                "runAfter": {
+                    "Scale_Down_Service_Tier_=_S5": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Wait"
+            },
+            "Scale_Down_Service_Tier_=_S5": {
+                "inputs": {
+                    "body": {
+                        "query": "ALTER DATABASE [azsqldb] MODIFY (SERVICE_OBJECTIVE = 'S5')"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['sql']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('default'))},@{encodeURIComponent(encodeURIComponent('default'))}/query/sql"
+                },
+                "runAfter": {},
+                "type": "ApiConnection"
+            },
+            "Scale_up_the_Service_Tier_to_S10": {
+                "inputs": {
+                    "body": {
+                        "query": "ALTER DATABASE [azsqldb] MODIFY (SERVICE_OBJECTIVE = 'S10');"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['sql']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('default'))},@{encodeURIComponent(encodeURIComponent('default'))}/query/sql"
+                },
+                "runAfter": {
+                    "Run_the_Environment_in_S5_during_Off_Hours_-_Delay": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "Start_Window_Daily_18:30": {
+                "recurrence": {
+                    "frequency": "Day",
+                    "interval": 1,
+                    "schedule": {
+                        "hours": [
+                            "18"
+                        ],
+                        "minutes": [
+                            30
+                        ]
+                    }
+                },
+                "type": "Recurrence"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "sql": {
+                    "connectionId": "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/resourceGroups/rslogicapps/providers/Microsoft.Web/connections/sql",
+                    "connectionName": "sql",
+                    "id": "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/providers/Microsoft.Web/locations/eastus2/managedApis/sql"
+                }
+            }
+        }
+    }
+}
